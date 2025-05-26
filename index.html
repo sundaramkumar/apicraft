@@ -22,10 +22,10 @@
     <!-- Sidebar -->
     <nav id="sidebar" class="bg-light border-end" style="width: 220px; min-width: 220px;">
       <div class="p-3">
-        <h5 class="mb-4"><img src="./images/apilogo.png" alt="" srcset="" class="logo"> API Craft</h5>
+        <h5 class="mb-4"><img src="./images/apilogo.png" alt="" srcset="" class="logo"> API Tester</h5>
         <ul class="nav flex-column">
           <li class="nav-item mb-2">
-            <a class="nav-link active" href="#"><i class="fas fa-paper-plane"></i> New Request</a>
+            <a class="nav-link active" href="#" id="newRequestMenu"><i class="fas fa-paper-plane"></i> New Request</a>
           </li>
           <li class="nav-item mb-2 position-relative">
             <a class="nav-link d-flex align-items-center justify-content-between" href="#" id="manageCollectionsBtn">
@@ -51,11 +51,19 @@
     </nav>
     <!-- Content Area -->
     <div class="flex-grow-1" id="mainContent">
+      <!-- Request Tabs -->
+      <ul class="nav nav-tabs" id="requestTabList" style="margin-top: 10px;">
+        <!-- Tabs will be injected here -->
+      </ul>
+      <div id="requestTabContent">
+        <!-- Request builder for active tab will be injected here -->
+      </div>
+
       <div class="container-fluid py-4">
-        <div class="mb-4">
+        <!-- <div class="mb-4">
           <h3 style="margin-bottom: 0;"><img src="./images/apilogo.png" alt="" srcset="" class="logo"> API Craft</h3>
           <small class="text-muted mb-3">Focuses on the craft of building and testing APIs</small>
-        </div>
+        </div> -->
 
         <!-- <div class="row mb-3">
           <div class="col-md-2 mt-2">
@@ -77,10 +85,10 @@
         </div> -->
 
         <!-- Request Builder -->
-        <div class="card mb-4">
-          <div class="card-header">
+        <div class="card mb-4 mt-4" style="display: none;margin-left: 16px;margin-right: 16px;">
+          <!-- <div class="card-header">
             <h5><i class="fas fa-paper-plane"></i> New Request</h5>
-          </div>
+          </div> -->
           <div class="card-body">
             <!-- URL and Method -->
             <div class="row mb-3">
@@ -1186,11 +1194,240 @@
         }
         // Call triggerSidebarUpdate() after any change to collections
 
-        // Initialize the application
-        const app = new PostmanClone();
+        // Request tabs logic
+        let requestTabs = [];
+        let activeTabId = null;
 
-        // On page load
-        triggerSidebarUpdate();
+        function getBuilderFieldsFromDOM() {
+          // Collect all builder fields from the DOM
+          return {
+            url: document.getElementById('requestUrl')?.value || '',
+            method: document.getElementById('httpMethod')?.value || 'GET',
+            name: document.getElementById('requestName')?.value || '',
+            params: Array.from(document.querySelectorAll('#queryParams .key-value-pair')).map(pair => ({
+              key: pair.querySelector('.param-key')?.value || '',
+              value: pair.querySelector('.param-value')?.value || ''
+            })).filter(p => p.key),
+            headers: Array.from(document.querySelectorAll('#requestHeaders .key-value-pair')).map(pair => ({
+              key: pair.querySelector('.header-key')?.value || '',
+              value: pair.querySelector('.header-value')?.value || ''
+            })).filter(h => h.key),
+            authType: document.getElementById('authType')?.value || 'none',
+            bearerToken: document.getElementById('bearerToken')?.value || '',
+            basicUsername: document.getElementById('basicUsername')?.value || '',
+            basicPassword: document.getElementById('basicPassword')?.value || '',
+            apiKeyName: document.getElementById('apiKeyName')?.value || '',
+            apiKeyValue: document.getElementById('apiKeyValue')?.value || '',
+            apiKeyLocation: document.getElementById('apiKeyLocation')?.value || 'header',
+            bodyType: document.getElementById('bodyType')?.value || 'none',
+            jsonBody: document.getElementById('jsonBody')?.value || '',
+            textBody: document.getElementById('textBody')?.value || '',
+            formData: Array.from(document.querySelectorAll('#formData .key-value-pair')).map(pair => ({
+              key: pair.querySelector('.form-key')?.value || '',
+              value: pair.querySelector('.form-value')?.value || ''
+            })).filter(f => f.key)
+          };
+        }
+
+        function setBuilderFieldsToDOM(data) {
+          document.getElementById('requestUrl').value = data.url || '';
+          document.getElementById('httpMethod').value = data.method || 'GET';
+          document.getElementById('requestName').value = data.name || '';
+          // Query Params
+          const queryParams = document.getElementById('queryParams');
+          queryParams.innerHTML = '';
+          (data.params && data.params.length ? data.params : [{ key: '', value: '' }]).forEach(p => {
+            const div = document.createElement('div');
+            div.className = 'row key-value-pair';
+            div.innerHTML = `
+      <div class="col-md-5">
+        <input type="text" class="form-control param-key" placeholder="Key" value="${p.key}">
+      </div>
+      <div class="col-md-5">
+        <input type="text" class="form-control param-value" placeholder="Value" value="${p.value}">
+      </div>
+      <div class="col-md-2">
+        <button class="btn btn-outline-danger btn-sm remove-param"><i class="fas fa-trash"></i></button>
+      </div>
+    `;
+            queryParams.appendChild(div);
+          });
+          // Headers
+          const requestHeaders = document.getElementById('requestHeaders');
+          requestHeaders.innerHTML = '';
+          (data.headers && data.headers.length ? data.headers : [{ key: '', value: '' }]).forEach(h => {
+            const div = document.createElement('div');
+            div.className = 'row key-value-pair';
+            div.innerHTML = `
+      <div class="col-md-5">
+        <input type="text" class="form-control header-key" placeholder="Header Name" value="${h.key}">
+      </div>
+      <div class="col-md-5">
+        <input type="text" class="form-control header-value" placeholder="Header Value" value="${h.value}">
+      </div>
+      <div class="col-md-2">
+        <button class="btn btn-outline-danger btn-sm remove-header"><i class="fas fa-trash"></i></button>
+      </div>
+    `;
+            requestHeaders.appendChild(div);
+          });
+          // Auth
+          document.getElementById('authType').value = data.authType || 'none';
+          app.updateAuthFields();
+          if (data.authType === 'bearer') {
+            document.getElementById('bearerToken').value = data.bearerToken || '';
+          } else if (data.authType === 'basic') {
+            document.getElementById('basicUsername').value = data.basicUsername || '';
+            document.getElementById('basicPassword').value = data.basicPassword || '';
+          } else if (data.authType === 'apikey') {
+            document.getElementById('apiKeyName').value = data.apiKeyName || '';
+            document.getElementById('apiKeyValue').value = data.apiKeyValue || '';
+            document.getElementById('apiKeyLocation').value = data.apiKeyLocation || 'header';
+          }
+          // Body
+          document.getElementById('bodyType').value = data.bodyType || 'none';
+          app.updateBodyContent();
+          if (data.bodyType === 'json') {
+            document.getElementById('jsonBody').value = data.jsonBody || '';
+          } else if (data.bodyType === 'text') {
+            document.getElementById('textBody').value = data.textBody || '';
+          } else if (data.bodyType === 'form') {
+            const formDataDiv = document.getElementById('formData');
+            formDataDiv.innerHTML = '';
+            (data.formData && data.formData.length ? data.formData : [{ key: '', value: '' }]).forEach(f => {
+              const div = document.createElement('div');
+              div.className = 'row key-value-pair';
+              div.innerHTML = `
+        <div class="col-md-5">
+          <input type="text" class="form-control form-key" placeholder="Key" value="${f.key}">
+        </div>
+        <div class="col-md-5">
+          <input type="text" class="form-control form-value" placeholder="Value" value="${f.value}">
+        </div>
+        <div class="col-md-2">
+          <button class="btn btn-outline-danger btn-sm remove-form"><i class="fas fa-trash"></i></button>
+        </div>
+      `;
+              formDataDiv.appendChild(div);
+            });
+          }
+        }
+
+        function createNewRequestTab(name = 'New Request') {
+          const id = 'tab_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+          requestTabs.push({ id, name, data: {} });
+          setActiveTab(id);
+          renderRequestTabs();
+        }
+
+        function setActiveTab(id) {
+          // Save current tab's data before switching
+          if (activeTabId) {
+            const tab = requestTabs.find(t => t.id === activeTabId);
+            if (tab) {
+              tab.data = getBuilderFieldsFromDOM();
+            }
+          }
+          activeTabId = id;
+          renderRequestTabs();
+          renderRequestTabContent();
+        }
+
+        function closeTab(id) {
+          // Only allow closing if more than one tab
+          if (requestTabs.length <= 1) return;
+          // Save current tab's data before closing
+          if (activeTabId === id) {
+            const tab = requestTabs.find(t => t.id === id);
+            if (tab) {
+              tab.data = getBuilderFieldsFromDOM();
+            }
+          }
+          const idx = requestTabs.findIndex(t => t.id === id);
+          if (idx !== -1) {
+            requestTabs.splice(idx, 1);
+            if (activeTabId === id) {
+              if (requestTabs.length > 0) {
+                setActiveTab(requestTabs[Math.max(0, idx - 1)].id);
+              } else {
+                // Never remove the last tab's content
+                activeTabId = null;
+                document.getElementById('requestTabContent').innerHTML = '';
+              }
+            } else {
+              renderRequestTabs();
+            }
+          }
+        }
+
+        function renderRequestTabs() {
+          const tabList = document.getElementById('requestTabList');
+          tabList.innerHTML = '';
+          tabList.style.display = '';
+          requestTabs.forEach(tab => {
+            const li = document.createElement('li');
+            li.className = 'nav-item';
+            // Only show close button if more than one tab
+            li.innerHTML = `<a class="nav-link${tab.id === activeTabId ? ' active' : ''}" href="#" data-tab-id="${tab.id}">${tab.name}${requestTabs.length > 1 ? ' <span class=\"ms-1 text-danger\" style=\"cursor:pointer;\" data-close-id=\"' + tab.id + '\">X</span>' : ''}</a>`;
+            tabList.appendChild(li);
+          });
+          // Tab click
+          tabList.querySelectorAll('a[data-tab-id]').forEach(a => {
+            a.onclick = function (e) {
+              e.preventDefault();
+              setActiveTab(this.getAttribute('data-tab-id'));
+            };
+          });
+          // Close click (only if more than one tab)
+          if (requestTabs.length > 1) {
+            tabList.querySelectorAll('span[data-close-id]').forEach(span => {
+              span.onclick = function (e) {
+                e.stopPropagation();
+                closeTab(this.getAttribute('data-close-id'));
+              };
+            });
+          }
+        }
+
+        function renderRequestTabContent() {
+          const tab = requestTabs.find(t => t.id === activeTabId);
+          const contentDiv = document.getElementById('requestTabContent');
+          if (!tab) {
+            // If only one tab, always show its content
+            if (requestTabs.length === 1) {
+              setActiveTab(requestTabs[0].id);
+              return;
+            }
+            contentDiv.innerHTML = '';
+            return;
+          }
+          // Render the request builder (clone from the original card)
+          const builder = document.querySelector('.card.mb-4');
+          if (builder) {
+            contentDiv.innerHTML = '';
+            const clone = builder.cloneNode(true);
+            clone.style.display = 'block';
+            contentDiv.appendChild(clone);
+            // Re-initialize event listeners for the cloned builder
+            window.app = new PostmanClone();
+            // Restore tab.data into the fields
+            setTimeout(() => setBuilderFieldsToDOM(tab.data || {}), 0);
+          }
+        }
+
+        // New Request menu click
+        const newRequestMenu = document.getElementById('newRequestMenu');
+        if (newRequestMenu) {
+          newRequestMenu.addEventListener('click', function (e) {
+            e.preventDefault();
+            createNewRequestTab();
+          });
+        }
+
+        // On page load, create the first tab
+        if (requestTabs.length === 0) {
+          createNewRequestTab();
+        }
       </script>
 </body>
 
