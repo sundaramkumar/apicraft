@@ -122,6 +122,11 @@ See the [CHANGELOG](CHANGELOG.md) file for details.
 
 ### Testing and Debugging
 
+### TO Do
+
+SQLite dB for storing settings, collections
+GraphQL support
+
 <div align="center">
   <br>
 

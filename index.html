@@ -27,8 +27,15 @@
           <li class="nav-item mb-2">
             <a class="nav-link active" href="#"><i class="fas fa-paper-plane"></i> New Request</a>
           </li>
-          <li class="nav-item mb-2">
-            <a class="nav-link" href="#" id="manageCollectionsBtn"><i class="fas fa-folder"></i> Collections</a>
+          <li class="nav-item mb-2 position-relative">
+            <a class="nav-link d-flex align-items-center justify-content-between" href="#" id="manageCollectionsBtn">
+              <span><i class="fas fa-folder"></i> Collections</span>
+              <span id="collectionsArrow" class="ms-2"><i class="fas fa-chevron-right"></i></span>
+            </a>
+            <ul class="list-group list-group-flush ms-3 mt-1" id="sidebarCollectionsList"
+              style="display:none; left:100%; top:0; padding-left: 10px;min-width:180px; ">
+              <!-- Collection names will be injected here -->
+            </ul>
           </li>
           <li class="nav-item mb-2">
             <a class="nav-link" href="#" id="exportCollectionsBtn"><i class="fas fa-file-export"></i> Export</a>
@@ -741,26 +748,26 @@
           alert('Request saved!');
         };
 
-        document.getElementById('manageCollectionsBtn').onclick = () => {
-          const list = document.getElementById('collectionsList');
-          list.innerHTML = '';
-          StorageManager.getCollections().forEach(c => {
-            const div = document.createElement('div');
-            div.className = 'mb-3';
-            div.innerHTML = `<strong>${c.name}</strong>
-      <ul>
-        ${c.requests.map((r, i) => `
-          <li>
-            <button class="btn btn-sm btn-outline-primary load-request" data-coll="${c.name}" data-idx="${i}">Load</button>
-            <button class="btn btn-sm btn-outline-danger remove-request" data-coll="${c.name}" data-idx="${i}"><i class="fas fa-trash"></i></button>
-            ${r.name}
-          </li>
-        `).join('')}
-      </ul>`;
-            list.appendChild(div);
-          });
-          new bootstrap.Modal(document.getElementById('collectionsModal')).show();
-        };
+        //   document.getElementById('manageCollectionsBtn').onclick = () => {
+        //     const list = document.getElementById('collectionsList');
+        //     list.innerHTML = '';
+        //     StorageManager.getCollections().forEach(c => {
+        //       const div = document.createElement('div');
+        //       div.className = 'mb-3';
+        //       div.innerHTML = `<strong>${c.name}</strong>
+        // <ul>
+        //   ${c.requests.map((r, i) => `
+        //     <li>
+        //       <button class="btn btn-sm btn-outline-primary load-request" data-coll="${c.name}" data-idx="${i}">Load</button>
+        //       <button class="btn btn-sm btn-outline-danger remove-request" data-coll="${c.name}" data-idx="${i}"><i class="fas fa-trash"></i></button>
+        //       ${r.name}
+        //     </li>
+        //   `).join('')}
+        // </ul>`;
+        //       list.appendChild(div);
+        //     });
+        //     new bootstrap.Modal(document.getElementById('collectionsModal')).show();
+        //   };
 
         // Remove request from collection
         document.addEventListener('click', function (e) {
@@ -812,7 +819,6 @@
                 queryParams.appendChild(div);
               });
             } else {
-              // Add one empty row if none
               app.addKeyValuePair('queryParams', 'param');
             }
 
@@ -919,8 +925,6 @@
           }
         });
 
-        // ...existing code...
-
         // Export collections as JSON file
         document.getElementById('exportCollectionsBtn').onclick = () => {
           const collections = StorageManager.getCollections();
@@ -969,10 +973,224 @@
           };
           reader.readAsText(file);
         };
-        // ...existing code...
+
+        function updateSidebarCollectionsList() {
+          const sidebarList = document.getElementById('sidebarCollectionsList');
+          if (!sidebarList) return;
+          const collections = StorageManager.getCollections();
+          sidebarList.innerHTML = '';
+          if (collections.length === 0) {
+            sidebarList.style.display = 'none';
+            return;
+          }
+          collections.forEach((c, idx) => {
+            const li = document.createElement('li');
+            li.className = 'list-group-item py-1 px-2 sidebar-collection-item';
+            li.style.cursor = 'pointer';
+            li.setAttribute('data-coll-idx', idx);
+            li.innerHTML = `<span class="sidebar-coll-name">${c.name} <i class="fas fa-chevron-right ms-1"></i></span>`;
+            sidebarList.appendChild(li);
+            // Add a container for requests (hidden by default)
+            const reqUl = document.createElement('ul');
+            reqUl.className = 'list-group ms-3 mb-2 sidebar-requests-list';
+            reqUl.style.display = 'none';
+            // Add requests as children
+            if (Array.isArray(c.requests)) {
+              c.requests.forEach((r, ridx) => {
+                const reqLi = document.createElement('li');
+                reqLi.className = 'list-group-item py-1 px-2 sidebar-request-item';
+                reqLi.style.cursor = 'pointer';
+                reqLi.textContent = r.name || 'Untitled';
+                reqLi.setAttribute('data-coll-idx', idx);
+                reqLi.setAttribute('data-req-idx', ridx);
+                // Optional: clicking a request loads it into the builder
+                reqLi.onclick = function (e) {
+                  e.stopPropagation();
+                  const req = StorageManager.getCollections()[idx].requests[ridx];
+                  if (!req) return;
+                  document.getElementById('requestUrl').value = req.url || '';
+                  document.getElementById('httpMethod').value = req.method || 'GET';
+                  document.getElementById('requestName').value = req.name || '';
+                  // Query Params
+                  const queryParams = document.getElementById('queryParams');
+                  queryParams.innerHTML = '';
+                  if (req.params && Object.keys(req.params).length) {
+                    Object.entries(req.params).forEach(([key, value]) => {
+                      const div = document.createElement('div');
+                      div.className = 'row key-value-pair';
+                      div.innerHTML = `
+                <div class="col-md-5">
+                  <input type="text" class="form-control param-key" placeholder="Key" value="${key}">
+                </div>
+                <div class="col-md-5">
+                  <input type="text" class="form-control param-value" placeholder="Value" value="${value}">
+                </div>
+                <div class="col-md-2">
+                  <button class="btn btn-outline-danger btn-sm remove-param">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              `;
+                      queryParams.appendChild(div);
+                    });
+                  } else {
+                    app.addKeyValuePair('queryParams', 'param');
+                  }
+                  // Headers
+                  const requestHeaders = document.getElementById('requestHeaders');
+                  requestHeaders.innerHTML = '';
+                  if (req.headers && Object.keys(req.headers).length) {
+                    Object.entries(req.headers).forEach(([key, value]) => {
+                      const div = document.createElement('div');
+                      div.className = 'row key-value-pair';
+                      div.innerHTML = `
+                <div class="col-md-5">
+                  <input type="text" class="form-control header-key" placeholder="Header Name" value="${key}">
+                </div>
+                <div class="col-md-5">
+                  <input type="text" class="form-control header-value" placeholder="Header Value" value="${value}">
+                </div>
+                <div class="col-md-2">
+                  <button class="btn btn-outline-danger btn-sm remove-header">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              `;
+                      requestHeaders.appendChild(div);
+                    });
+                  } else {
+                    app.addKeyValuePair('requestHeaders', 'header');
+                  }
+                  // Auth (basic support for Bearer and Basic)
+                  if (req.headers && req.headers['Authorization']) {
+                    const authHeader = req.headers['Authorization'];
+                    if (authHeader.startsWith('Bearer ')) {
+                      document.getElementById('authType').value = 'bearer';
+                      app.updateAuthFields();
+                      document.getElementById('bearerToken').value = authHeader.replace('Bearer ', '');
+                    } else if (authHeader.startsWith('Basic ')) {
+                      document.getElementById('authType').value = 'basic';
+                      app.updateAuthFields();
+                      try {
+                        const decoded = atob(authHeader.replace('Basic ', ''));
+                        const [username, password] = decoded.split(':');
+                        document.getElementById('basicUsername').value = username || '';
+                        document.getElementById('basicPassword').value = password || '';
+                      } catch { }
+                    } else {
+                      document.getElementById('authType').value = 'none';
+                      app.updateAuthFields();
+                    }
+                  } else {
+                    document.getElementById('authType').value = 'none';
+                    app.updateAuthFields();
+                  }
+                  // Body
+                  if (req.body && req.body.body !== undefined) {
+                    let bodyType = 'none';
+                    if (req.body.contentType === 'application/json') bodyType = 'json';
+                    else if (req.body.contentType === 'application/x-www-form-urlencoded') bodyType = 'form';
+                    else if (req.body.contentType === 'text/plain') bodyType = 'text';
+                    document.getElementById('bodyType').value = bodyType;
+                    app.updateBodyContent();
+                    if (bodyType === 'json') {
+                      document.getElementById('jsonBody').value = req.body.body || '';
+                    } else if (bodyType === 'form') {
+                      const formData = new URLSearchParams(req.body.body || '');
+                      const formDataDiv = document.getElementById('formData');
+                      formDataDiv.innerHTML = '';
+                      let hasAny = false;
+                      for (const [key, value] of formData.entries()) {
+                        hasAny = true;
+                        const div = document.createElement('div');
+                        div.className = 'row key-value-pair';
+                        div.innerHTML = `
+                  <div class="col-md-5">
+                    <input type="text" class="form-control form-key" placeholder="Key" value="${key}">
+                  </div>
+                  <div class="col-md-5">
+                    <input type="text" class="form-control form-value" placeholder="Value" value="${value}">
+                  </div>
+                  <div class="col-md-2">
+                    <button class="btn btn-outline-danger btn-sm remove-form">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </div>
+                `;
+                        formDataDiv.appendChild(div);
+                      }
+                      if (!hasAny) {
+                        app.addKeyValuePair('formData', 'form');
+                      }
+                    } else if (bodyType === 'text') {
+                      document.getElementById('textBody').value = req.body.body || '';
+                    }
+                  } else {
+                    document.getElementById('bodyType').value = 'none';
+                    app.updateBodyContent();
+                  }
+                };
+                reqUl.appendChild(reqLi);
+              });
+            }
+            sidebarList.appendChild(reqUl);
+          });
+          // Add click event for expanding/collapsing requests under a collection
+          Array.from(sidebarList.querySelectorAll('.sidebar-collection-item')).forEach((li, idx) => {
+            li.addEventListener('click', function (e) {
+              e.stopPropagation();
+              const reqUl = sidebarList.querySelectorAll('.sidebar-requests-list')[idx];
+              const icon = li.querySelector('i');
+              if (reqUl.style.display === 'block') {
+                reqUl.style.display = 'none';
+                if (icon) icon.className = 'fas fa-chevron-right ms-1';
+              } else {
+                reqUl.style.display = 'block';
+                if (icon) icon.className = 'fas fa-chevron-down ms-1';
+              }
+            });
+          });
+        }
+
+        // Collapsible/expandable collections menu
+        const collectionsNav = document.getElementById('manageCollectionsBtn');
+        const sidebarList = document.getElementById('sidebarCollectionsList');
+        const collectionsArrow = document.getElementById('collectionsArrow');
+        let collectionsExpanded = false;
+
+        if (collectionsNav && sidebarList && collectionsArrow) {
+          collectionsNav.addEventListener('click', (e) => {
+            e.preventDefault();
+            collectionsExpanded = !collectionsExpanded;
+            if (collectionsExpanded) {
+              updateSidebarCollectionsList();
+              sidebarList.style.display = 'block';
+              collectionsArrow.innerHTML = '<i class="fas fa-chevron-down"></i>';
+            } else {
+              sidebarList.style.display = 'none';
+              collectionsArrow.innerHTML = '<i class="fas fa-chevron-right"></i>';
+            }
+          });
+        }
+
+        // Update sidebar collections list after import/save/remove
+        function triggerSidebarUpdate() {
+          updateSidebarCollectionsList();
+          if (collectionsExpanded) {
+            sidebarList.style.display = 'block';
+            collectionsArrow.innerHTML = '<i class="fas fa-chevron-down"></i>';
+          } else {
+            sidebarList.style.display = 'none';
+            collectionsArrow.innerHTML = '<i class="fas fa-chevron-right"></i>';
+          }
+        }
+        // Call triggerSidebarUpdate() after any change to collections
 
         // Initialize the application
         const app = new PostmanClone();
+
+        // On page load
+        triggerSidebarUpdate();
       </script>
 </body>
 

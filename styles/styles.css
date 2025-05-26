@@ -93,3 +93,15 @@ h3 {
   width: 32px;
   height: 32px;
 }
+
+.list-group-item {
+  background-color: transparent !important;
+  cursor: pointer;
+}
+.list-group-item:hover {
+  background-color: #f1f1f1 !important;
+}
+.list-group-item.active {
+  background-color: #007bff !important;
+  color: white;
+}
