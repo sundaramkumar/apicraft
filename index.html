@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Craft - API Testing Tool (Postman Clone)</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap"
+    rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="styles/styles.css">
+</head>
+
+<body>
+  <div class="d-flex" style="min-height: 100vh;">
+    <!-- Sidebar -->
+    <nav id="sidebar" class="bg-light border-end" style="width: 220px; min-width: 220px;">
+      <div class="p-3">
+        <h5 class="mb-4"><img src="./images/apilogo.png" alt="" srcset="" class="logo"> API Craft</h5>
+        <ul class="nav flex-column">
+          <li class="nav-item mb-2">
+            <a class="nav-link active" href="#"><i class="fas fa-paper-plane"></i> New Request</a>
+          </li>
+          <li class="nav-item mb-2">
+            <a class="nav-link" href="#" id="manageCollectionsBtn"><i class="fas fa-folder"></i> Collections</a>
+          </li>
+          <li class="nav-item mb-2">
+            <a class="nav-link" href="#" id="exportCollectionsBtn"><i class="fas fa-file-export"></i> Export</a>
+          </li>
+          <li class="nav-item mb-2">
+            <label class="nav-link mb-0" style="cursor:pointer;" for="importCollectionsInput">
+              <i class="fas fa-file-import"></i> Import
+              <input type="file" id="importCollectionsInput" accept="application/json" style="display:none;">
+            </label>
+          </li>
+        </ul>
+      </div>
+    </nav>
+    <!-- Content Area -->
+    <div class="flex-grow-1" id="mainContent">
+      <div class="container-fluid py-4">
+        <div class="mb-4">
+          <h3 style="margin-bottom: 0;"><img src="./images/apilogo.png" alt="" srcset="" class="logo"> API Craft</h3>
+          <small class="text-muted mb-3">Focuses on the craft of building and testing APIs</small>
+        </div>
+
+        <!-- <div class="row mb-3">
+          <div class="col-md-2 mt-2">
+            <button class="btn btn-outline-info w-100" id="manageCollectionsBtn">
+              <i class="fas fa-folder"></i> Collections
+            </button>
+          </div>
+          <div class="col-md-2 mt-2">
+            <button class="btn btn-outline-success w-100" id="exportCollectionsBtn">
+              <i class="fas fa-file-export"></i> Export
+            </button>
+          </div>
+          <div class="col-md-2 mt-2">
+            <label class="btn btn-outline-primary w-100 mb-0" for="importCollectionsInput">
+              <i class="fas fa-file-import"></i> Import
+              <input type="file" id="importCollectionsInput" accept="application/json" style="display:none;">
+            </label>
+          </div>
+        </div> -->
+
+        <!-- Request Builder -->
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5><i class="fas fa-paper-plane"></i> New Request</h5>
+          </div>
+          <div class="card-body">
+            <!-- URL and Method -->
+            <div class="row mb-3">
+              <div class="col-md-2">
+                <select class="form-select method-select" id="httpMethod">
+                  <option value="GET">GET</option>
+                  <option value="POST">POST</option>
+                  <option value="PUT">PUT</option>
+                  <option value="PATCH">PATCH</option>
+                  <option value="DELETE">DELETE</option>
+                  <option value="HEAD">HEAD</option>
+                  <option value="OPTIONS">OPTIONS</option>
+                </select>
+              </div>
+              <div class="col-md-8">
+                <input type="url" class="form-control" id="requestUrl"
+                  placeholder="Enter request URL (e.g., https://jsonplaceholder.typicode.com/posts/1)">
+              </div>
+              <div class="col-md-2">
+                <button class="btn btn-primary w-100" id="sendRequest">
+                  <i class="fas fa-paper-plane"></i> Send
+                </button>
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-md-10">
+                <input type="text" class="form-control" id="requestName" placeholder="Request Name (optional)">
+              </div>
+              <div class="col-md-2">
+                <button class="btn btn-outline-secondary w-100" id="saveRequestBtn">
+                  <i class="fas fa-save"></i> Save Request
+                </button>
+              </div>
+            </div>
+
+            <!-- <div class="row mb-3">
+          <div class="col-md-10">
+            <button class="btn btn-outline-secondary w-100" id="collectionsBtn">
+              <i class="fas fa-folder"></i> Collections
+            </button>
+          </div>
+          <div class="col-md-2">
+            <button class="btn btn-outline-secondary w-100" id="clearBtn">
+              <i class="fas fa-trash"></i> Clear
+            </button>
+          </div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-md-10">
+            <button class="btn btn-outline-secondary w-100" id="historyBtn">
+              <i class="fas fa-history"></i> History
+            </button>
+          </div>
+          <div class="col-md-2">
+            <button class="btn btn-outline-secondary w-100" id="exportBtn">
+              <i class="fas fa-file-export"></i> Export
+            </button>
+          </div>
+        </div> -->
+
+            <!-- Save Request Modal -->
+            <div class="modal fade" id="saveRequestModal" tabindex="-1">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title">Save Request</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                  </div>
+                  <div class="modal-body">
+                    <input type="text" class="form-control mb-2" id="requestName" placeholder="Request Name">
+                    <select class="form-select" id="collectionSelect"></select>
+                    <button class="btn btn-link" id="createCollectionBtn">+ New Collection</button>
+                    <input type="text" class="form-control mt-2 d-none" id="newCollectionName"
+                      placeholder="Collection Name">
+                  </div>
+                  <div class="modal-footer">
+                    <button class="btn btn-primary" id="saveRequestConfirm">Save</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Collections Modal -->
+            <div class="modal fade" id="collectionsModal" tabindex="-1">
+              <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title">Collections</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                  </div>
+                  <div class="modal-body" id="collectionsList">
+                    <!-- Collections and requests will be listed here -->
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tabs for Request Configuration -->
+            <ul class="nav nav-tabs" id="requestTabs">
+              <li class="nav-item">
+                <a class="nav-link active" data-bs-toggle="tab" href="#params">Query Params</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#headers">Headers</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#auth">Authorization</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#body">Body</a>
+              </li>
+            </ul>
+
+            <div class="tab-content mt-3 top-panel">
+              <!-- Query Parameters -->
+              <div class="tab-pane fade show active" id="params">
+                <button class="btn btn-outline-primary btn-sm mt-2" id="addParam">
+                  <i class="fas fa-plus"></i> Add Parameter
+                </button>
+                <div id="queryParams">
+                  <div class="row key-value-pair">
+                    <div class="col-md-5">
+                      <input type="text" class="form-control param-key" placeholder="Key">
+                    </div>
+                    <div class="col-md-5">
+                      <input type="text" class="form-control param-value" placeholder="Value">
+                    </div>
+                    <div class="col-md-2">
+                      <button class="btn btn-outline-danger btn-sm remove-param">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- Headers -->
+              <div class="tab-pane fade" id="headers">
+                <div id="requestHeaders">
+                  <div class="row key-value-pair">
+                    <div class="col-md-5">
+                      <input type="text" class="form-control header-key" placeholder="Header Name">
+                    </div>
+                    <div class="col-md-5">
+                      <input type="text" class="form-control header-value" placeholder="Header Value">
+                    </div>
+                    <div class="col-md-2">
+                      <button class="btn btn-outline-danger btn-sm remove-header">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <button class="btn btn-outline-primary btn-sm mt-2" id="addHeader">
+                  <i class="fas fa-plus"></i> Add Header
+                </button>
+              </div>
+
+              <!-- Authorization -->
+              <div class="tab-pane fade" id="auth">
+                <div class="row">
+                  <div class="col-md-3">
+                    <label class="form-label">Auth Type</label>
+                    <select class="form-select" id="authType">
+                      <option value="none">No Auth</option>
+                      <option value="bearer">Bearer Token</option>
+                      <option value="basic">Basic Auth</option>
+                      <option value="apikey">API Key</option>
+                    </select>
+                  </div>
+                  <div class="col-md-9" id="authFields">
+                    <!-- Auth fields will be populated based on selection -->
+                  </div>
+                </div>
+              </div>
+
+              <!-- Body -->
+              <div class="tab-pane fade" id="body">
+                <div class="row mb-3">
+                  <div class="col-md-3">
+                    <label class="form-label">Body Type</label>
+                    <select class="form-select" id="bodyType">
+                      <option value="none">None</option>
+                      <option value="json">JSON</option>
+                      <option value="form">Form Data</option>
+                      <option value="text">Plain Text</option>
+                    </select>
+                  </div>
+                </div>
+                <div id="bodyContent">
+                  <!-- Body content will be populated based on selection -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Response Section -->
+        <div class="response-section" id="responseSection" style="display: none;">
+          <h5><i class="fas fa-code"></i> Response</h5>
+
+          <div class="row mb-3">
+            <div class="col-md-3">
+              <strong>Status:</strong> <span id="responseStatus" class="status-badge"></span>
+            </div>
+            <div class="col-md-3">
+              <strong>Time:</strong> <span id="responseTime"></span>
+            </div>
+            <div class="col-md-3">
+              <strong>Size:</strong> <span id="responseSize"></span>
+            </div>
+          </div>
+
+          <ul class="nav nav-tabs" id="responseTabs">
+            <li class="nav-item">
+              <a class="nav-link active" data-bs-toggle="tab" href="#responseBody">Body</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" data-bs-toggle="tab" href="#responseHeaders">Headers</a>
+            </li>
+          </ul>
+
+          <div class="tab-content mt-3">
+            <div class="tab-pane fade show active" id="responseBody">
+              <div class="json-viewer" id="responseBodyContent"></div>
+            </div>
+            <div class="tab-pane fade" id="responseHeaders">
+              <div class="json-viewer" id="responseHeadersContent"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+      <script>
+        class PostmanClone {
+          constructor() {
+            this.initializeEventListeners();
+            this.updateAuthFields();
+            this.updateBodyContent();
+          }
+
+          initializeEventListeners() {
+            // Send request
+            document.getElementById('sendRequest').addEventListener('click', () => this.sendRequest());
+
+            // Add/remove parameters
+            document.getElementById('addParam').addEventListener('click', () => this.addKeyValuePair('queryParams', 'param'));
+            document.getElementById('addHeader').addEventListener('click', () => this.addKeyValuePair('requestHeaders', 'header'));
+
+            // Auth type change
+            document.getElementById('authType').addEventListener('change', () => this.updateAuthFields());
+
+            // Body type change
+            document.getElementById('bodyType').addEventListener('change', () => this.updateBodyContent());
+
+            // Enter key to send request
+            document.getElementById('requestUrl').addEventListener('keypress', (e) => {
+              if (e.key === 'Enter') this.sendRequest();
+            });
+
+            // Remove button events (delegated)
+            document.addEventListener('click', (e) => {
+              if (e.target.classList.contains('remove-param') || e.target.closest('.remove-param')) {
+                e.target.closest('.key-value-pair').remove();
+              }
+              if (e.target.classList.contains('remove-header') || e.target.closest('.remove-header')) {
+                e.target.closest('.key-value-pair').remove();
+              }
+            });
+          }
+
+          addKeyValuePair(containerId, prefix) {
+            const container = document.getElementById(containerId);
+            const div = document.createElement('div');
+            div.className = 'row key-value-pair';
+            div.innerHTML = `
+                    <div class="col-md-5">
+                        <input type="text" class="form-control ${prefix}-key" placeholder="${prefix === 'param' ? 'Key' : 'Header Name'}">
+                    </div>
+                    <div class="col-md-5">
+                        <input type="text" class="form-control ${prefix}-value" placeholder="${prefix === 'param' ? 'Value' : 'Header Value'}">
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-outline-danger btn-sm remove-${prefix}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+            container.appendChild(div);
+          }
+
+          updateAuthFields() {
+            const authType = document.getElementById('authType').value;
+            const authFields = document.getElementById('authFields');
+
+            let html = '';
+            switch (authType) {
+              case 'bearer':
+                html = `
+                            <label class="form-label">Token</label>
+                            <input type="text" class="form-control" id="bearerToken" placeholder="Enter bearer token">
+                        `;
+                break;
+              case 'basic':
+                html = `
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label class="form-label">Username</label>
+                                    <input type="text" class="form-control" id="basicUsername" placeholder="Username">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Password</label>
+                                    <input type="password" class="form-control" id="basicPassword" placeholder="Password">
+                                </div>
+                            </div>
+                        `;
+                break;
+              case 'apikey':
+                html = `
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <label class="form-label">Key</label>
+                                    <input type="text" class="form-control" id="apiKeyName" placeholder="API Key Name">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Value</label>
+                                    <input type="text" class="form-control" id="apiKeyValue" placeholder="API Key Value">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Add to</label>
+                                    <select class="form-select" id="apiKeyLocation">
+                                        <option value="header">Header</option>
+                                        <option value="query">Query Params</option>
+                                    </select>
+                                </div>
+                            </div>
+                        `;
+                break;
+            }
+            authFields.innerHTML = html;
+          }
+
+          updateBodyContent() {
+            const bodyType = document.getElementById('bodyType').value;
+            const bodyContent = document.getElementById('bodyContent');
+
+            let html = '';
+            switch (bodyType) {
+              case 'json':
+                html = `
+                            <textarea class="form-control" id="jsonBody" rows="10" placeholder='{"key": "value"}'></textarea>
+                        `;
+                break;
+              case 'form':
+                html = `
+                            <div id="formData">
+                                <div class="row key-value-pair">
+                                    <div class="col-md-5">
+                                        <input type="text" class="form-control form-key" placeholder="Key">
+                                    </div>
+                                    <div class="col-md-5">
+                                        <input type="text" class="form-control form-value" placeholder="Value">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button class="btn btn-outline-danger btn-sm remove-form">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <button class="btn btn-outline-primary btn-sm mt-2" onclick="app.addKeyValuePair('formData', 'form')">
+                                <i class="fas fa-plus"></i> Add Field
+                            </button>
+                        `;
+                break;
+              case 'text':
+                html = `
+                            <textarea class="form-control" id="textBody" rows="10" placeholder="Enter plain text"></textarea>
+                        `;
+                break;
+            }
+            bodyContent.innerHTML = html;
+          }
+
+          collectQueryParams() {
+            const params = {};
+            document.querySelectorAll('#queryParams .key-value-pair').forEach(pair => {
+              const key = pair.querySelector('.param-key').value.trim();
+              const value = pair.querySelector('.param-value').value.trim();
+              if (key) params[key] = value;
+            });
+            return params;
+          }
+
+          collectHeaders() {
+            const headers = {};
+            document.querySelectorAll('#requestHeaders .key-value-pair').forEach(pair => {
+              const key = pair.querySelector('.header-key').value.trim();
+              const value = pair.querySelector('.header-value').value.trim();
+              if (key) headers[key] = value;
+            });
+
+            // Add auth headers
+            const authType = document.getElementById('authType').value;
+            switch (authType) {
+              case 'bearer':
+                const token = document.getElementById('bearerToken')?.value;
+                if (token) headers['Authorization'] = `Bearer ${token}`;
+                break;
+              case 'basic':
+                const username = document.getElementById('basicUsername')?.value;
+                const password = document.getElementById('basicPassword')?.value;
+                if (username && password) {
+                  headers['Authorization'] = `Basic ${btoa(username + ':' + password)}`;
+                }
+                break;
+              case 'apikey':
+                const keyName = document.getElementById('apiKeyName')?.value;
+                const keyValue = document.getElementById('apiKeyValue')?.value;
+                const location = document.getElementById('apiKeyLocation')?.value;
+                if (keyName && keyValue && location === 'header') {
+                  headers[keyName] = keyValue;
+                }
+                break;
+            }
+
+            return headers;
+          }
+
+          collectBody() {
+            const bodyType = document.getElementById('bodyType').value;
+            let body = null;
+            let contentType = null;
+
+            switch (bodyType) {
+              case 'json':
+                const jsonText = document.getElementById('jsonBody')?.value;
+                if (jsonText) {
+                  body = jsonText;
+                  contentType = 'application/json';
+                }
+                break;
+              case 'form':
+                const formData = {};
+                document.querySelectorAll('#formData .key-value-pair').forEach(pair => {
+                  const key = pair.querySelector('.form-key').value.trim();
+                  const value = pair.querySelector('.form-value').value.trim();
+                  if (key) formData[key] = value;
+                });
+                if (Object.keys(formData).length > 0) {
+                  body = new URLSearchParams(formData).toString();
+                  contentType = 'application/x-www-form-urlencoded';
+                }
+                break;
+              case 'text':
+                const textContent = document.getElementById('textBody')?.value;
+                if (textContent) {
+                  body = textContent;
+                  contentType = 'text/plain';
+                }
+                break;
+            }
+
+            return { body, contentType };
+          }
+
+          async sendRequest() {
+            const url = document.getElementById('requestUrl').value.trim();
+            if (!url) {
+              alert('Please enter a URL');
+              return;
+            }
+
+            const method = document.getElementById('httpMethod').value;
+            const params = this.collectQueryParams();
+            const headers = this.collectHeaders();
+            const { body, contentType } = this.collectBody();
+
+            // Add content-type header if body exists
+            if (contentType && body) {
+              headers['Content-Type'] = contentType;
+            }
+
+            // Add API key to query params if needed
+            const authType = document.getElementById('authType').value;
+            if (authType === 'apikey') {
+              const keyName = document.getElementById('apiKeyName')?.value;
+              const keyValue = document.getElementById('apiKeyValue')?.value;
+              const location = document.getElementById('apiKeyLocation')?.value;
+              if (keyName && keyValue && location === 'query') {
+                params[keyName] = keyValue;
+              }
+            }
+
+            // Show loading state
+            const sendBtn = document.getElementById('sendRequest');
+            const originalText = sendBtn.innerHTML;
+            sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+            sendBtn.disabled = true;
+
+            try {
+              // Send request through our Node.js proxy
+              const proxyResponse = await fetch('http://localhost:3000/api/proxy', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  url: url,
+                  method: method,
+                  headers: headers,
+                  body: body,
+                  params: params
+                })
+              });
+
+              const responseData = await proxyResponse.json();
+
+              if (responseData.success) {
+                this.displayProxyResponse(responseData);
+              } else {
+                this.displayProxyError(responseData);
+              }
+
+            } catch (error) {
+              this.displayError(error, 0);
+            } finally {
+              sendBtn.innerHTML = originalText;
+              sendBtn.disabled = false;
+            }
+          }
+
+
+
+          displayProxyResponse(responseData) {
+            const responseSection = document.getElementById('responseSection');
+            responseSection.style.display = 'block';
+
+            // Status
+            const statusElement = document.getElementById('responseStatus');
+            statusElement.textContent = `${responseData.status} ${responseData.statusText}`;
+            statusElement.className = 'status-badge ' +
+              (responseData.status >= 200 && responseData.status < 300 ? 'status-success' :
+                responseData.status >= 400 ? 'status-error' : 'status-warning');
+
+            // Time and Size
+            document.getElementById('responseTime').textContent = `${responseData.responseTime}ms`;
+            document.getElementById('responseSize').textContent = `${responseData.size} bytes`;
+
+            // Headers
+            document.getElementById('responseHeadersContent').textContent =
+              JSON.stringify(responseData.headers, null, 2);
+
+            // Body
+            let formattedBody;
+            if (typeof responseData.data === 'object') {
+              formattedBody = JSON.stringify(responseData.data, null, 2);
+            } else {
+              formattedBody = responseData.data || '';
+            }
+
+            document.getElementById('responseBodyContent').textContent = formattedBody;
+          }
+
+          displayProxyError(errorData) {
+            const responseSection = document.getElementById('responseSection');
+            responseSection.style.display = 'block';
+
+            document.getElementById('responseStatus').textContent = 'Error';
+            document.getElementById('responseStatus').className = 'status-badge status-error';
+            document.getElementById('responseTime').textContent = `${errorData.responseTime || 0}ms`;
+            document.getElementById('responseSize').textContent = '0 bytes';
+
+            const errorMessage = errorData.error || 'Unknown error occurred';
+            const errorDetails = errorData.details ? `\n\nDetails: ${errorData.details}` : '';
+
+            document.getElementById('responseBodyContent').textContent =
+              `Error: ${errorMessage}${errorDetails}`;
+            document.getElementById('responseHeadersContent').textContent = '{}';
+          }
+
+          displayError(error, responseTime) {
+            const responseSection = document.getElementById('responseSection');
+            responseSection.style.display = 'block';
+
+            document.getElementById('responseStatus').textContent = 'Error';
+            document.getElementById('responseStatus').className = 'status-badge status-error';
+            document.getElementById('responseTime').textContent = `${responseTime}ms`;
+            document.getElementById('responseSize').textContent = '0 bytes';
+            document.getElementById('responseBodyContent').textContent =
+              `Error: ${error.message}\n\nThis might be due to server connection issues.`;
+            document.getElementById('responseHeadersContent').textContent = '{}';
+          }
+        }
+
+        class StorageManager {
+          static getCollections() {
+            return JSON.parse(localStorage.getItem('collections') || '[]');
+          }
+          static saveCollections(collections) {
+            localStorage.setItem('collections', JSON.stringify(collections));
+          }
+          static addCollection(name) {
+            const collections = this.getCollections();
+            if (!collections.find(c => c.name === name)) {
+              collections.push({ name, requests: [] });
+              this.saveCollections(collections);
+            }
+          }
+          static addRequestToCollection(collectionName, request) {
+            const collections = this.getCollections();
+            const collection = collections.find(c => c.name === collectionName);
+            if (collection) {
+              collection.requests.push(request);
+              this.saveCollections(collections);
+            }
+          }
+        }
+
+        function getCurrentRequest(app) {
+          return {
+            name: document.getElementById('requestName').value || 'Untitled',
+            url: document.getElementById('requestUrl').value,
+            method: document.getElementById('httpMethod').value,
+            params: app.collectQueryParams(),
+            headers: app.collectHeaders(),
+            body: app.collectBody(),
+            timestamp: Date.now()
+          };
+        }
+
+        // UI logic for modals and saving
+        document.getElementById('saveRequestBtn').onclick = () => {
+          // Populate collections dropdown
+          const select = document.getElementById('collectionSelect');
+          select.innerHTML = '';
+          StorageManager.getCollections().forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.name;
+            opt.textContent = c.name;
+            select.appendChild(opt);
+          });
+          document.getElementById('saveRequestModal').querySelector('#newCollectionName').classList.add('d-none');
+          new bootstrap.Modal(document.getElementById('saveRequestModal')).show();
+        };
+
+        document.getElementById('createCollectionBtn').onclick = () => {
+          document.getElementById('newCollectionName').classList.toggle('d-none');
+        };
+
+        document.getElementById('saveRequestConfirm').onclick = () => {
+          let collectionName = document.getElementById('collectionSelect').value;
+          const newCollection = document.getElementById('newCollectionName');
+          if (!collectionName && !newCollection.classList.contains('d-none') && newCollection.value) {
+            collectionName = newCollection.value;
+            StorageManager.addCollection(collectionName);
+          }
+          if (!collectionName) return alert('Select or create a collection');
+          const req = getCurrentRequest(app);
+          StorageManager.addRequestToCollection(collectionName, req);
+          bootstrap.Modal.getInstance(document.getElementById('saveRequestModal')).hide();
+          alert('Request saved!');
+        };
+
+        document.getElementById('manageCollectionsBtn').onclick = () => {
+          const list = document.getElementById('collectionsList');
+          list.innerHTML = '';
+          StorageManager.getCollections().forEach(c => {
+            const div = document.createElement('div');
+            div.className = 'mb-3';
+            div.innerHTML = `<strong>${c.name}</strong>
+      <ul>
+        ${c.requests.map((r, i) => `
+          <li>
+            <button class="btn btn-sm btn-outline-primary load-request" data-coll="${c.name}" data-idx="${i}">Load</button>
+            <button class="btn btn-sm btn-outline-danger remove-request" data-coll="${c.name}" data-idx="${i}"><i class="fas fa-trash"></i></button>
+            ${r.name}
+          </li>
+        `).join('')}
+      </ul>`;
+            list.appendChild(div);
+          });
+          new bootstrap.Modal(document.getElementById('collectionsModal')).show();
+        };
+
+        // Remove request from collection
+        document.addEventListener('click', function (e) {
+          if (e.target.classList.contains('remove-request')) {
+            const coll = e.target.getAttribute('data-coll');
+            const idx = parseInt(e.target.getAttribute('data-idx'), 10);
+            const collections = StorageManager.getCollections();
+            const collection = collections.find(c => c.name === coll);
+            if (collection) {
+              collection.requests.splice(idx, 1);
+              StorageManager.saveCollections(collections);
+              // Refresh the modal list
+              document.getElementById('manageCollectionsBtn').onclick();
+            }
+          }
+        });
+
+        document.addEventListener('click', function (e) {
+          if (e.target.classList.contains('load-request')) {
+            const coll = e.target.getAttribute('data-coll');
+            const idx = e.target.getAttribute('data-idx');
+            const req = StorageManager.getCollections().find(c => c.name === coll).requests[idx];
+
+            // URL and Method
+            document.getElementById('requestUrl').value = req.url || '';
+            document.getElementById('httpMethod').value = req.method || 'GET';
+            document.getElementById('requestName').value = req.name || '';
+
+            // Query Params
+            const queryParams = document.getElementById('queryParams');
+            queryParams.innerHTML = '';
+            if (req.params && Object.keys(req.params).length) {
+              Object.entries(req.params).forEach(([key, value]) => {
+                const div = document.createElement('div');
+                div.className = 'row key-value-pair';
+                div.innerHTML = `
+          <div class="col-md-5">
+            <input type="text" class="form-control param-key" placeholder="Key" value="${key}">
+          </div>
+          <div class="col-md-5">
+            <input type="text" class="form-control param-value" placeholder="Value" value="${value}">
+          </div>
+          <div class="col-md-2">
+            <button class="btn btn-outline-danger btn-sm remove-param">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        `;
+                queryParams.appendChild(div);
+              });
+            } else {
+              // Add one empty row if none
+              app.addKeyValuePair('queryParams', 'param');
+            }
+
+            // Headers
+            const requestHeaders = document.getElementById('requestHeaders');
+            requestHeaders.innerHTML = '';
+            if (req.headers && Object.keys(req.headers).length) {
+              Object.entries(req.headers).forEach(([key, value]) => {
+                const div = document.createElement('div');
+                div.className = 'row key-value-pair';
+                div.innerHTML = `
+          <div class="col-md-5">
+            <input type="text" class="form-control header-key" placeholder="Header Name" value="${key}">
+          </div>
+          <div class="col-md-5">
+            <input type="text" class="form-control header-value" placeholder="Header Value" value="${value}">
+          </div>
+          <div class="col-md-2">
+            <button class="btn btn-outline-danger btn-sm remove-header">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        `;
+                requestHeaders.appendChild(div);
+              });
+            } else {
+              app.addKeyValuePair('requestHeaders', 'header');
+            }
+
+            // Auth (basic support for Bearer and Basic)
+            if (req.headers && req.headers['Authorization']) {
+              const authHeader = req.headers['Authorization'];
+              if (authHeader.startsWith('Bearer ')) {
+                document.getElementById('authType').value = 'bearer';
+                app.updateAuthFields();
+                document.getElementById('bearerToken').value = authHeader.replace('Bearer ', '');
+              } else if (authHeader.startsWith('Basic ')) {
+                document.getElementById('authType').value = 'basic';
+                app.updateAuthFields();
+                try {
+                  const decoded = atob(authHeader.replace('Basic ', ''));
+                  const [username, password] = decoded.split(':');
+                  document.getElementById('basicUsername').value = username || '';
+                  document.getElementById('basicPassword').value = password || '';
+                } catch { }
+              } else {
+                document.getElementById('authType').value = 'none';
+                app.updateAuthFields();
+              }
+            } else {
+              document.getElementById('authType').value = 'none';
+              app.updateAuthFields();
+            }
+
+            // Body
+            if (req.body && req.body.body !== undefined) {
+              // Set body type
+              let bodyType = 'none';
+              if (req.body.contentType === 'application/json') bodyType = 'json';
+              else if (req.body.contentType === 'application/x-www-form-urlencoded') bodyType = 'form';
+              else if (req.body.contentType === 'text/plain') bodyType = 'text';
+              document.getElementById('bodyType').value = bodyType;
+              app.updateBodyContent();
+
+              if (bodyType === 'json') {
+                document.getElementById('jsonBody').value = req.body.body || '';
+              } else if (bodyType === 'form') {
+                const formData = new URLSearchParams(req.body.body || '');
+                const formDataDiv = document.getElementById('formData');
+                formDataDiv.innerHTML = '';
+                let hasAny = false;
+                for (const [key, value] of formData.entries()) {
+                  hasAny = true;
+                  const div = document.createElement('div');
+                  div.className = 'row key-value-pair';
+                  div.innerHTML = `
+            <div class="col-md-5">
+              <input type="text" class="form-control form-key" placeholder="Key" value="${key}">
+            </div>
+            <div class="col-md-5">
+              <input type="text" class="form-control form-value" placeholder="Value" value="${value}">
+            </div>
+            <div class="col-md-2">
+              <button class="btn btn-outline-danger btn-sm remove-form">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          `;
+                  formDataDiv.appendChild(div);
+                }
+                if (!hasAny) {
+                  app.addKeyValuePair('formData', 'form');
+                }
+              } else if (bodyType === 'text') {
+                document.getElementById('textBody').value = req.body.body || '';
+              }
+            } else {
+              document.getElementById('bodyType').value = 'none';
+              app.updateBodyContent();
+            }
+
+            // Hide modal
+            bootstrap.Modal.getInstance(document.getElementById('collectionsModal')).hide();
+          }
+        });
+
+        // ...existing code...
+
+        // Export collections as JSON file
+        document.getElementById('exportCollectionsBtn').onclick = () => {
+          const collections = StorageManager.getCollections();
+          const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(collections, null, 2));
+          const dlAnchor = document.createElement('a');
+          dlAnchor.setAttribute("href", dataStr);
+          dlAnchor.setAttribute("download", "postman_collections.json");
+          document.body.appendChild(dlAnchor);
+          dlAnchor.click();
+          document.body.removeChild(dlAnchor);
+        };
+
+        // Import collections from JSON file
+        document.getElementById('importCollectionsInput').onchange = function (e) {
+          const file = e.target.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = function (evt) {
+            try {
+              const imported = JSON.parse(evt.target.result);
+              if (Array.isArray(imported)) {
+                // Merge with existing collections (avoid duplicates by name)
+                const existing = StorageManager.getCollections();
+                imported.forEach(newColl => {
+                  const found = existing.find(c => c.name === newColl.name);
+                  if (found) {
+                    // Merge requests (avoid duplicates by name)
+                    newColl.requests.forEach(req => {
+                      if (!found.requests.some(r => r.name === req.name)) {
+                        found.requests.push(req);
+                      }
+                    });
+                  } else {
+                    existing.push(newColl);
+                  }
+                });
+                StorageManager.saveCollections(existing);
+                alert('Collections imported!');
+              } else {
+                alert('Invalid file format.');
+              }
+            } catch {
+              alert('Failed to import. Invalid JSON.');
+            }
+            e.target.value = ''; // Reset input
+          };
+          reader.readAsText(file);
+        };
+        // ...existing code...
+
+        // Initialize the application
+        const app = new PostmanClone();
+      </script>
+</body>
+
+</html>

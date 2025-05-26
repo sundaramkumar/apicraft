@@ -1,0 +1,95 @@
+body,
+html,
+html div {
+  /* background-color: #1B2A32; */
+  /* background-color: #000;
+      color: #ffffff; */
+  font-family: "Montserrat", Arial, sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+}
+
+/* .btn,
+    .btn-outline-primary,
+    .btn-outline-danger {
+      --bs-btn-border-color: #ffffff;
+      color: #ffffff;
+    } */
+
+h3 {
+  font-family: "Roboto", Arial, sans-serif;
+  font-weight: 600;
+}
+
+.top-panel {
+  .tab-pane {
+    height: 250px;
+    overflow: auto;
+    /* border: 1px solid #e0e0e0; */
+  }
+}
+
+#queryParams {
+  overflow-y: scroll;
+}
+
+.title {
+  color: #009ada;
+}
+
+.method-select {
+  max-width: 120px;
+}
+
+#queryParams .tab-content {
+  min-height: 300px;
+  overflow: scroll;
+}
+
+.key-value-pair {
+  margin-bottom: 10px;
+}
+
+.response-section {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 20px;
+  margin-top: 20px;
+}
+
+.status-badge {
+  font-weight: bold;
+}
+
+.status-success {
+  color: #28a745;
+}
+
+.status-error {
+  color: #dc3545;
+}
+
+.status-warning {
+  color: #ffc107;
+}
+
+.json-viewer {
+  background-color: #2d3748;
+  color: #e2e8f0;
+  padding: 15px;
+  border-radius: 5px;
+  font-family: "Courier New", monospace;
+  font-size: 14px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+}
+
+.loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.logo {
+  width: 32px;
+  height: 32px;
+}
