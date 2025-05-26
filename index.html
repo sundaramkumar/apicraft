@@ -51,8 +51,14 @@
     </nav>
     <!-- Content Area -->
     <div class="flex-grow-1" id="mainContent">
+      <div class="container-fluid pt-4">
+        <div class="mb-4">
+          <h3 style="margin-bottom: 0;"><img src="./images/apilogo.png" alt="" srcset="" class="logo"> API Craft</h3>
+          <small class="text-muted mb-3">Focuses on the craft of building and testing APIs</small>
+        </div>
+      </div>
       <!-- Request Tabs -->
-      <ul class="nav nav-tabs" id="requestTabList" style="margin-top: 10px;">
+      <ul class="nav nav-tabs" id="requestTabList" style="margin-top: 10px;margin-left:10px;margin-right:10px;">
         <!-- Tabs will be injected here -->
       </ul>
       <div id="requestTabContent">
@@ -1200,6 +1206,11 @@
 
         function getBuilderFieldsFromDOM() {
           // Collect all builder fields from the DOM
+          const responseSection = document.getElementById('responseSection');
+          let responseHTML = '';
+          if (responseSection) {
+            responseHTML = responseSection.outerHTML;
+          }
           return {
             url: document.getElementById('requestUrl')?.value || '',
             method: document.getElementById('httpMethod')?.value || 'GET',
@@ -1225,7 +1236,8 @@
             formData: Array.from(document.querySelectorAll('#formData .key-value-pair')).map(pair => ({
               key: pair.querySelector('.form-key')?.value || '',
               value: pair.querySelector('.form-value')?.value || ''
-            })).filter(f => f.key)
+            })).filter(f => f.key),
+            responseHTML // Save the response section's HTML for this tab
           };
         }
 
@@ -1311,6 +1323,28 @@
               formDataDiv.appendChild(div);
             });
           }
+          // Restore response section for this tab
+          const contentDiv = document.getElementById('requestTabContent');
+          let responseSection = contentDiv.querySelector('.response-section');
+          if (responseSection) responseSection.remove();
+          if (data.responseHTML) {
+            // Insert the saved response section after the builder
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = data.responseHTML;
+            const resp = tempDiv.firstElementChild;
+            if (resp) contentDiv.appendChild(resp);
+          } else {
+            // If no response yet, add a fresh hidden response section
+            const builder = contentDiv.querySelector('.card.mb-4');
+            if (builder) {
+              const origResp = document.querySelector('.container-fluid .response-section');
+              if (origResp) {
+                const respClone = origResp.cloneNode(true);
+                respClone.style.display = 'none';
+                contentDiv.appendChild(respClone);
+              }
+            }
+          }
         }
 
         function createNewRequestTab(name = 'New Request') {
@@ -1365,10 +1399,12 @@
           tabList.innerHTML = '';
           tabList.style.display = '';
           requestTabs.forEach(tab => {
+            // Use request name if present, else fallback to tab.name
+            const tabTitle = (tab.data && tab.data.name && tab.data.name.trim()) ? tab.data.name.trim() : tab.name;
             const li = document.createElement('li');
             li.className = 'nav-item';
             // Only show close button if more than one tab
-            li.innerHTML = `<a class="nav-link${tab.id === activeTabId ? ' active' : ''}" href="#" data-tab-id="${tab.id}">${tab.name}${requestTabs.length > 1 ? ' <span class=\"ms-1 text-danger\" style=\"cursor:pointer;\" data-close-id=\"' + tab.id + '\">X</span>' : ''}</a>`;
+            li.innerHTML = `<a class="nav-link${tab.id === activeTabId ? ' active' : ''}" href="#" data-tab-id="${tab.id}">${tabTitle}${requestTabs.length > 1 ? ' <span class=\"ms-1 text-danger\" style=\"cursor:pointer;\" data-close-id=\"' + tab.id + '\">X</span>' : ''}</a>`;
             tabList.appendChild(li);
           });
           // Tab click
@@ -1410,7 +1446,7 @@
             contentDiv.appendChild(clone);
             // Re-initialize event listeners for the cloned builder
             window.app = new PostmanClone();
-            // Restore tab.data into the fields
+            // Restore tab.data into the fields and response section
             setTimeout(() => setBuilderFieldsToDOM(tab.data || {}), 0);
           }
         }
@@ -1428,6 +1464,39 @@
         if (requestTabs.length === 0) {
           createNewRequestTab();
         }
+
+        // Patch PostmanClone to update the response section in the tab's data after a response is shown
+        const origDisplayProxyResponse = PostmanClone.prototype.displayProxyResponse;
+        PostmanClone.prototype.displayProxyResponse = function (responseData) {
+          origDisplayProxyResponse.call(this, responseData);
+          // Save the response section for the current tab
+          const tab = requestTabs.find(t => t.id === activeTabId);
+          if (tab) {
+            const contentDiv = document.getElementById('requestTabContent');
+            const resp = contentDiv.querySelector('.response-section');
+            if (resp) tab.data.responseHTML = resp.outerHTML;
+          }
+        };
+        const origDisplayProxyError = PostmanClone.prototype.displayProxyError;
+        PostmanClone.prototype.displayProxyError = function (errorData) {
+          origDisplayProxyError.call(this, errorData);
+          const tab = requestTabs.find(t => t.id === activeTabId);
+          if (tab) {
+            const contentDiv = document.getElementById('requestTabContent');
+            const resp = contentDiv.querySelector('.response-section');
+            if (resp) tab.data.responseHTML = resp.outerHTML;
+          }
+        };
+        const origDisplayError = PostmanClone.prototype.displayError;
+        PostmanClone.prototype.displayError = function (error, responseTime) {
+          origDisplayError.call(this, error, responseTime);
+          const tab = requestTabs.find(t => t.id === activeTabId);
+          if (tab) {
+            const contentDiv = document.getElementById('requestTabContent');
+            const resp = contentDiv.querySelector('.response-section');
+            if (resp) tab.data.responseHTML = resp.outerHTML;
+          }
+        };
       </script>
 </body>
 
